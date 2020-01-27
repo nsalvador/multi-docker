@@ -1,0 +1,23 @@
+sudo: required
+
+services:
+  - docker
+
+before_install:
+  - docker build -t nsalvador/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true nsalvador/react-test npm test
+
+after_success:
+  - docker build -t nsalvador/multi-client ./client
+  - docker build -t nsalvador/multi-nginx ./nginx
+  - docker build -t nsalvador/multi-server ./server
+  - docker build -t nsalvador/multi-worker ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push nsalvador/multi-client
+  - docker push nsalvador/multi-nginx
+  - docker push nsalvador/multi-server
+  - docker push nsalvador/multi-worker
